@@ -161,16 +161,30 @@ async function fetchMicrosoftClarityData(config: MicrosoftClarityConfig, timeRan
   }
 
   try {
-    // In production, use Microsoft Clarity API
     logger.info("Fetching Microsoft Clarity data...");
-    
-    // Mock implementation - replace with actual API call
+
+    const response = await axios.get(
+      `https://www.clarity.ms/export-data/api/v1/project-live-insights`,
+      {
+        params: {
+          projectId: config.projectId,
+          timeRange,
+        },
+        headers: {
+          Authorization: `Bearer ${process.env.MICROSOFT_CLARITY_API_KEY}`,
+        },
+        timeout: 10000,
+      },
+    );
+
+    const data = response.data || {};
     return {
-      sessions: 2100,
-      rageclicks: 45,
-      deadclicks: 78,
-      excessiveScrolling: 120,
-      quickBacks: 89,
+      sessions: data.sessions ?? data.totalSessions ?? 0,
+      rageclicks: data.rageClicks ?? data.rageclicks ?? 0,
+      deadclicks: data.deadClicks ?? data.deadclicks ?? 0,
+      excessiveScrolling: data.excessiveScrolling ?? 0,
+      quickBacks: data.quickBacks ?? 0,
+      raw: data,
     };
   } catch (error) {
     logger.error("Error fetching Microsoft Clarity data:", error);

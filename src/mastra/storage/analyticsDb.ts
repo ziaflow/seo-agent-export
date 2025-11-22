@@ -172,3 +172,118 @@ export async function storeGeneratedContent(content: {
     throw error;
   }
 }
+
+/**
+ * Store SEO schema snapshot data
+ */
+export async function storeSeoSchemaSnapshot(snapshot: {
+  websiteUrl: string;
+  schemaTypes: string[];
+  missingTypes: string[];
+  warnings: string[];
+  detectedIssues: Array<{
+    type: string;
+    severity: "critical" | "high" | "medium" | "low";
+    message: string;
+  }>;
+  crawledAt: string;
+}): Promise<void> {
+  try {
+    const record: AnalyticsRecord = {
+      id: `schema-${snapshot.websiteUrl.replace(/[^a-zA-Z0-9]/g, '-')}-${snapshot.crawledAt}`,
+      source: "seo_schema",
+      metric_type: "snapshot",
+      date: snapshot.crawledAt,
+      data: snapshot,
+    };
+
+    await storeAnalyticsData(record);
+  } catch (error) {
+    console.error("Error storing SEO schema snapshot:", error);
+    throw error;
+  }
+}
+
+/**
+ * Store keyword radar / opportunity insights
+ */
+export async function storeKeywordRadarInsights(payload: {
+  industry: string;
+  focusKeywords: Array<{
+    keyword: string;
+    searchVolume: number;
+    difficulty: number;
+    opportunityScore: number;
+    intent: string;
+  }>;
+  trendSignals: Array<{ topic: string; delta: string }>;
+  generatedAt: string;
+}): Promise<void> {
+  try {
+    const record: AnalyticsRecord = {
+      id: `keyword-radar-${payload.industry}-${payload.generatedAt}`,
+      source: "keyword_radar",
+      metric_type: "opportunity_map",
+      date: payload.generatedAt,
+      data: payload,
+    };
+
+    await storeAnalyticsData(record);
+  } catch (error) {
+    console.error("Error storing keyword radar insights:", error);
+    throw error;
+  }
+}
+
+/**
+ * Persist automation decisions (e.g., should create content)
+ */
+export async function storeAutomationDecision(decision: {
+  websiteUrl: string;
+  decisionType: string;
+  shouldAct: boolean;
+  confidence: number;
+  reasons: string[];
+  evaluatedAt: string;
+}): Promise<void> {
+  try {
+    const record: AnalyticsRecord = {
+      id: `decision-${decision.decisionType}-${decision.evaluatedAt}`,
+      source: "automation_decision",
+      metric_type: decision.decisionType,
+      date: decision.evaluatedAt,
+      data: decision,
+    };
+
+    await storeAnalyticsData(record);
+  } catch (error) {
+    console.error("Error storing automation decision:", error);
+    throw error;
+  }
+}
+
+/**
+ * Store monitoring telemetry pulses
+ */
+export async function storeMonitoringPulse(pulse: {
+  websiteUrl: string;
+  signal: string;
+  severity: "info" | "warning" | "critical";
+  metrics: Record<string, any>;
+  observedAt: string;
+}): Promise<void> {
+  try {
+    const record: AnalyticsRecord = {
+      id: `monitoring-${pulse.signal}-${pulse.observedAt}`,
+      source: "monitoring",
+      metric_type: pulse.signal,
+      date: pulse.observedAt,
+      data: pulse,
+    };
+
+    await storeAnalyticsData(record);
+  } catch (error) {
+    console.error("Error storing monitoring pulse:", error);
+    throw error;
+  }
+}

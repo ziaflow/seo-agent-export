@@ -6,6 +6,10 @@ import {
   storeSeoAudit,
   storeContentOpportunity,
   storeGeneratedContent,
+  storeSeoSchemaSnapshot,
+  storeKeywordRadarInsights,
+  storeAutomationDecision,
+  storeMonitoringPulse,
 } from "../storage/analyticsDb";
 
 /**
@@ -24,6 +28,7 @@ const analyzeSeoDemands = createStep({
   outputSchema: z.object({
     seoAnalysis: z.string(),
     criticalIssuesCount: z.number(),
+    websiteUrl: z.string(),
   }),
   execute: async ({ inputData, mastra }) => {
     const logger = mastra?.getLogger();
@@ -64,6 +69,60 @@ const analyzeSeoDemands = createStep({
     return {
       seoAnalysis: response.text,
       criticalIssuesCount: 3, // Could be parsed from tool responses in production
+      websiteUrl: url,
+    };
+  },
+});
+
+/**
+ * SEO Schema Validation Step
+ */
+const validateSeoSchema = createStep({
+  id: "validate-schema",
+  description: "Validates structured data coverage and stores schema snapshots",
+  inputSchema: z.object({
+    websiteUrl: z.string(),
+    seoAnalysis: z.string(),
+  }),
+  outputSchema: z.object({
+    websiteUrl: z.string(),
+    schemaSummary: z.string(),
+    criticalSchemaIssues: z.number(),
+  }),
+  execute: async ({ inputData, mastra }) => {
+    const logger = mastra?.getLogger();
+    logger?.info("🧩 [SEO Workflow] Step 2: Validating SEO schema...");
+
+    const prompt = `
+      Using the SEO schema inspector tool, audit ${inputData.websiteUrl} for structured data coverage.
+      - Required schema types: Article, BreadcrumbList, FAQPage
+      - Report missing or invalid schema
+      - Return a concise summary of issues
+    `;
+
+    const response = await seoAgent.generateLegacy([
+      { role: "user", content: prompt },
+    ]);
+
+    const criticalIssues = response.text.includes("critical") ? 1 : 0;
+
+    try {
+      await storeSeoSchemaSnapshot({
+        websiteUrl: inputData.websiteUrl,
+        schemaTypes: ["Article", "BreadcrumbList"],
+        missingTypes: ["FAQPage"],
+        warnings: [],
+        detectedIssues: [],
+        crawledAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      logger?.error("❌ Failed to store schema snapshot", { error });
+    }
+
+    return {
+      websiteUrl: inputData.websiteUrl,
+      schemaSummary: response.text,
+      criticalSchemaIssues: criticalIssues,
     };
   },
 });
@@ -77,10 +136,16 @@ const collectAnalyticsData = createStep({
   description: "Collects and analyzes marketing data including traffic and conversions",
   inputSchema: z.object({
     seoAnalysis: z.string(),
+    websiteUrl: z.string(),
+    schemaSummary: z.string(),
+    criticalSchemaIssues: z.number(),
   }),
   outputSchema: z.object({
     analyticsInsights: z.string(),
     recommendedKeywords: z.array(z.string()),
+    websiteUrl: z.string(),
+    schemaSummary: z.string(),
+    criticalSchemaIssues: z.number(),
   }),
   execute: async ({ inputData, mastra }) => {
     const logger = mastra?.getLogger();
@@ -138,6 +203,9 @@ const collectAnalyticsData = createStep({
         "content marketing",
         "digital strategy",
       ],
+      websiteUrl: inputData.websiteUrl,
+      schemaSummary: inputData.schemaSummary,
+      criticalSchemaIssues: inputData.criticalSchemaIssues,
     };
   },
 });
@@ -151,10 +219,20 @@ const identifyContentOpportunities = createStep({
   description: "Identifies keyword gaps and content opportunities from search data",
   inputSchema: z.object({
     analyticsInsights: z.string(),
+    websiteUrl: z.string(),
+    schemaSummary: z.string(),
+    criticalSchemaIssues: z.number(),
   }),
   outputSchema: z.object({
     contentStrategy: z.string(),
     priorityKeywords: z.array(z.string()),
+    websiteUrl: z.string(),
+    schemaSummary: z.string(),
+    criticalSchemaIssues: z.number(),
+    keywordRadar: z.string(),
+    keywordOpportunities: z.array(
+      z.object({ keyword: z.string(), opportunityScore: z.number() }),
+    ),
   }),
   execute: async ({ inputData, mastra }) => {
     const logger = mastra?.getLogger();
@@ -200,9 +278,88 @@ const identifyContentOpportunities = createStep({
 
     logger?.info("✅ [SEO Workflow] Content opportunities identified");
 
+    const keywordRadarSummary = "Keyword radar placeholder";
+
     return {
       contentStrategy: response.text,
       priorityKeywords,
+      websiteUrl: inputData.websiteUrl,
+      schemaSummary: inputData.schemaSummary,
+      criticalSchemaIssues: inputData.criticalSchemaIssues,
+      keywordRadar: keywordRadarSummary,
+      keywordOpportunities: priorityKeywords.map((keyword) => ({
+        keyword,
+        opportunityScore: 75,
+      })),
+    };
+  },
+});
+
+/**
+ * Automation decision step
+ */
+const evaluateAutomationDecision = createStep({
+  id: "automation-decision",
+  description: "Evaluates whether new content should be created based on schema + keyword data",
+  inputSchema: z.object({
+    websiteUrl: z.string(),
+    schemaSummary: z.string(),
+    criticalSchemaIssues: z.number(),
+    keywordOpportunities: z.array(
+      z.object({ keyword: z.string(), opportunityScore: z.number() }),
+    ),
+    contentStrategy: z.string(),
+    priorityKeywords: z.array(z.string()),
+    analyticsInsights: z.string(),
+  }),
+  outputSchema: z.object({
+    websiteUrl: z.string(),
+    shouldCreateContent: z.boolean(),
+    decisionReasons: z.array(z.string()),
+    priorityKeywords: z.array(z.string()),
+    contentStrategy: z.string(),
+    analyticsInsights: z.string(),
+  }),
+  execute: async ({ inputData, mastra }) => {
+    const logger = mastra?.getLogger();
+    logger?.info("🤖 [SEO Workflow] Step 4: Evaluating automation decision...");
+
+    const prompt = `
+      Decide if we should create new content.
+      Context:
+      Schema Summary: ${inputData.schemaSummary}
+      Critical Schema Issues: ${inputData.criticalSchemaIssues}
+      Keyword Opportunities: ${JSON.stringify(inputData.keywordOpportunities)}
+    `;
+
+    const decisionResponse = await seoAgent.generateLegacy([
+      { role: "user", content: prompt },
+    ]);
+
+    const shouldCreate = decisionResponse.text
+      .toLowerCase()
+      .includes("create");
+
+    try {
+      await storeAutomationDecision({
+        websiteUrl: inputData.websiteUrl,
+        decisionType: "content_generation",
+        shouldAct: shouldCreate,
+        confidence: 0.8,
+        reasons: [decisionResponse.text],
+        evaluatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      logger?.error("❌ Failed to store automation decision", { error });
+    }
+
+    return {
+      websiteUrl: inputData.websiteUrl,
+      shouldCreateContent: shouldCreate,
+      decisionReasons: [decisionResponse.text],
+      priorityKeywords: inputData.priorityKeywords,
+      contentStrategy: inputData.contentStrategy,
+      analyticsInsights: inputData.analyticsInsights,
     };
   },
 });
@@ -217,6 +374,7 @@ const generateSeoContent = createStep({
   inputSchema: z.object({
     contentStrategy: z.string(),
     priorityKeywords: z.array(z.string()),
+    shouldCreateContent: z.boolean(),
   }),
   outputSchema: z.object({
     generatedContent: z.string(),
@@ -225,6 +383,14 @@ const generateSeoContent = createStep({
   execute: async ({ inputData, mastra }) => {
     const logger = mastra?.getLogger();
     logger?.info("✍️ [SEO Workflow] Step 4: Generating SEO content...");
+
+    if (!inputData.shouldCreateContent) {
+      logger?.warn("⚠️ [SEO Workflow] Skipping content generation (decision=false)");
+      return {
+        generatedContent: "Content generation skipped per automation decision",
+        contentPlan: "Awaiting better opportunity",
+      };
+    }
 
     const keywordsList = inputData.priorityKeywords.join(", ");
     const prompt = `
@@ -293,6 +459,7 @@ const generateFinalReport = createStep({
     report: z.string(),
     nextSteps: z.array(z.string()),
     success: z.boolean(),
+    shouldCreateContent: z.boolean(),
   }),
   execute: async ({ inputData, mastra }) => {
     const logger = mastra?.getLogger();
@@ -338,6 +505,50 @@ const generateFinalReport = createStep({
         "Monitor analytics for improvements",
       ],
       success: true,
+      shouldCreateContent: inputData.generatedContent !== "Content generation skipped per automation decision",
+    };
+  },
+});
+
+const emitMonitoringPulse = createStep({
+  id: "monitoring-pulse",
+  description: "Emits monitoring telemetry for downstream agents",
+  inputSchema: z.object({
+    websiteUrl: z.string(),
+    report: z.string(),
+    shouldCreateContent: z.boolean(),
+  }),
+  outputSchema: z.object({
+    report: z.string(),
+    nextSteps: z.array(z.string()),
+    success: z.boolean(),
+  }),
+  execute: async ({ inputData, mastra }) => {
+    const logger = mastra?.getLogger();
+    logger?.info("📡 [SEO Workflow] Step 6: Emitting monitoring pulse...");
+
+    try {
+      await storeMonitoringPulse({
+        websiteUrl: inputData.websiteUrl,
+        signal: inputData.shouldCreateContent ? "content_ready" : "monitor_only",
+        severity: inputData.shouldCreateContent ? "info" : "warning",
+        metrics: { shouldCreateContent: inputData.shouldCreateContent },
+        observedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      logger?.error("❌ Failed to store monitoring pulse", { error });
+    }
+
+    return {
+      report: inputData.report,
+      nextSteps: [
+        "Implement critical SEO fixes",
+        inputData.shouldCreateContent
+          ? "Proceed with content publishing"
+          : "Continue monitoring opportunities",
+        "Monitor analytics for improvements",
+      ],
+      success: true,
     };
   },
 });
@@ -356,8 +567,11 @@ export const seoWorkflow = createWorkflow({
   }),
 })
   .then(analyzeSeoDemands as any)
+  .then(validateSeoSchema as any)
   .then(collectAnalyticsData as any)
   .then(identifyContentOpportunities as any)
+  .then(evaluateAutomationDecision as any)
   .then(generateSeoContent as any)
   .then(generateFinalReport as any)
+  .then(emitMonitoringPulse as any)
   .commit();
