@@ -1,0 +1,1 @@
+DATABASE_URL=postgresql://jeremy:<password>@post-analytics-db-prod.postgres.database.azure.com:5432/post-analytics-db-prod?sslmode=require

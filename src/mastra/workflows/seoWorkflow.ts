@@ -158,7 +158,7 @@ const collectAnalyticsData = createStep({
       ${inputData.seoAnalysis}
       
       Please:
-      1. Use the realAnalyticsTool to fetch data from ALL platforms: google_analytics, meta_pixel, tiktok_pixel, microsoft_clarity
+      1. Use the realAnalyticsTool to fetch data from ALL platforms: google_analytics, google_search_console, meta_pixel, tiktok_pixel, microsoft_clarity
       2. Request all metrics: traffic, conversions, engagement, behavior
       3. For time range, use: last-30-days
       
@@ -169,6 +169,7 @@ const collectAnalyticsData = createStep({
       - Understand user behavior and engagement patterns
       - Identify conversion opportunities
       - Spot technical issues (rage clicks, dead clicks from Clarity)
+      - Surface search visibility gaps (queries, pages, CTR from Search Console)
       - Recommend specific optimizations
       
       Provide actionable insights based on the data structure.
@@ -180,12 +181,14 @@ const collectAnalyticsData = createStep({
 
     // Store analytics data in database
     try {
+      const platformSummary = response.text;
+
       await storeAnalyticsData({
         source: "multi_platform",
         metric_type: "aggregated_analytics",
         date: new Date().toISOString(),
         data: {
-          insights: response.text,
+          insights: platformSummary,
           timestamp: new Date().toISOString(),
         },
       });
@@ -575,3 +578,4 @@ export const seoWorkflow = createWorkflow({
   .then(generateFinalReport as any)
   .then(emitMonitoringPulse as any)
   .commit();
+

@@ -1069,22 +1069,23 @@ const monitoringPulseTool = createTool({
     websiteUrl: z.string().url(),
     signal: z.string().describe("Name of the signal, e.g., traffic_drop, schema_error"),
     severity: z.enum(["info", "warning", "critical"]),
-    metrics: z.record(z.any()).default({})
-  }),
+    metrics: z.record(z.union([z.string(), z.number(), z.boolean()])).describe("Optional key-value telemetry metrics (string|number|boolean)")
+  }).partial({ metrics: true }),
   outputSchema: z.object({
     websiteUrl: z.string(),
     signal: z.string(),
     severity: z.enum(["info", "warning", "critical"]),
-    metrics: z.record(z.any()),
+    metrics: z.record(z.union([z.string(), z.number(), z.boolean()])),
     observedAt: z.string()
-  }),
+  }).partial({ metrics: true }),
   execute: async ({ context, mastra }) => {
     const logger = mastra?.getLogger();
+    const metrics = context.metrics ?? {};
     const pulse = {
       websiteUrl: context.websiteUrl,
       signal: context.signal,
       severity: context.severity,
-      metrics: context.metrics,
+      metrics,
       observedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
     await storeMonitoringPulse(pulse);
@@ -1097,8 +1098,9 @@ const monitoringPulseTool = createTool({
 });
 
 const openai = createOpenAI({
-  baseURL: process.env.MICROSOFT_FOUNDRY_API_BASE_URL || void 0,
-  apiKey: process.env.MICROSOFT_FOUNDRY_API_KEY || process.env.OPENAI_API_KEY
+  baseURL: "https://jerem-md7wzrrg-eastus2.services.ai.azure.com/openai/v1/",
+  apiKey: process.env.MICROSOFT_FOUNDRY_API_KEY
+  // set to GGfDHSf8...
 });
 const seoAgent = new Agent({
   name: "SEO Orchestrator Agent",
@@ -1124,9 +1126,9 @@ When responding:
 - Always explain your findings in clear, business-focused language
 
 Remember: Your goal is to improve website visibility, drive qualified traffic, and increase conversions through data-driven SEO strategies.`,
-  // Use gpt-4o for reliable performance with Microsoft Foundry
-  // For GPT-5 models, ensure MICROSOFT_FOUNDRY_API_BASE_URL points to your deployment
-  model: openai("gpt-4o"),
+  // Use gpt-5-mini deployed via Azure AI Foundry
+  // Ensure MICROSOFT_FOUNDRY_API_BASE_URL targets your Foundry project endpoint
+  model: openai("gpt-5-mini"),
   tools: {
     seoAnalysisTool,
     analyticsTool,

@@ -6,6 +6,11 @@ import { storeMonitoringPulse } from "../storage/analyticsDb";
  * Monitoring Pulse Tool
  * Records near-real-time telemetry signals for later analysis.
  */
+const metricsSchema = z
+  .object({})
+  .catchall(z.union([z.string(), z.number(), z.boolean()]))
+  .describe("Key-value telemetry metrics (string|number|boolean) object");
+
 export const monitoringPulseTool = createTool({
   id: "monitoring-pulse",
   description:
@@ -14,22 +19,23 @@ export const monitoringPulseTool = createTool({
     websiteUrl: z.string().url(),
     signal: z.string().describe("Name of the signal, e.g., traffic_drop, schema_error"),
     severity: z.enum(["info", "warning", "critical"]),
-    metrics: z.record(z.any()).default({}),
+    metrics: metricsSchema.optional(),
   }),
   outputSchema: z.object({
     websiteUrl: z.string(),
     signal: z.string(),
     severity: z.enum(["info", "warning", "critical"]),
-    metrics: z.record(z.any()),
+    metrics: metricsSchema.optional(),
     observedAt: z.string(),
   }),
   execute: async ({ context, mastra }) => {
     const logger = mastra?.getLogger();
+    const metrics = context.metrics ?? {};
     const pulse = {
       websiteUrl: context.websiteUrl,
       signal: context.signal,
       severity: context.severity,
-      metrics: context.metrics,
+      metrics,
       observedAt: new Date().toISOString(),
     };
 

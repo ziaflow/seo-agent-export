@@ -14,15 +14,15 @@ import { realtimeMiddleware } from '@inngest/realtime';
 import { serve as serve$1, init } from '@mastra/inngest';
 import { Agent, MessageList } from '@mastra/core/agent';
 import { Memory as Memory$1 } from '@mastra/memory';
-import { seoAnalysisTool } from './tools/bb874c9f-6734-47ec-879b-829758c0531c.mjs';
-import { analyticsTool } from './tools/40f15e3a-4568-4238-813d-ca606e521bb6.mjs';
-import { realAnalyticsTool } from './tools/34b1f503-c83c-427a-a760-96b0175749e2.mjs';
-import { searchQueryTool } from './tools/92aa7218-c39f-472c-aac3-204ce48ad95f.mjs';
-import { contentGenerationTool } from './tools/61712b1a-10e2-464a-be33-627383c2b898.mjs';
-import { seoSchemaInspectorTool } from './tools/aac44e71-3fc8-4b11-ac64-c5f2ecf2f8bf.mjs';
-import { keywordRadarTool } from './tools/89043a94-aab7-4415-abe8-ab5b62d8189d.mjs';
-import { automationDecisionTool } from './tools/6c0e8f17-b0d7-4fa9-bcd8-2790248386d3.mjs';
-import { monitoringPulseTool } from './tools/899aba93-2fcd-4bcb-9117-efdfab8aa3ce.mjs';
+import { seoAnalysisTool } from './tools/520b9220-a90b-4f43-974b-c7c4d95d2666.mjs';
+import { analyticsTool } from './tools/3e050bfc-78a2-46af-91fc-724e38c1e2cf.mjs';
+import { realAnalyticsTool } from './tools/7a8c92a3-4410-4cc4-b3db-19fc277800a6.mjs';
+import { searchQueryTool } from './tools/b714fc1d-0c60-4614-8ecb-472ba3edae19.mjs';
+import { contentGenerationTool } from './tools/ce03a4bb-f928-436f-b307-886791d54479.mjs';
+import { seoSchemaInspectorTool } from './tools/9c368a28-d379-4281-9e0b-a9903e3b405d.mjs';
+import { keywordRadarTool } from './tools/b7fb81fd-1989-4418-b7f9-e804b7e705b0.mjs';
+import { automationDecisionTool } from './tools/0a7d2404-e63e-412c-8cc0-f401a2ecd734.mjs';
+import { monitoringPulseTool } from './tools/1cb9df4c-cd20-46df-b9aa-8ca98bd09729.mjs';
 import { createOpenAI as createOpenAI$1 } from '@ai-sdk/openai';
 import { d as storeSeoAudit, c as storeSeoSchemaSnapshot, e as storeAnalyticsData, f as storeContentOpportunity, s as storeAutomationDecision, g as storeGeneratedContent, b as storeMonitoringPulse } from './analyticsDb.mjs';
 import crypto$1, { randomUUID } from 'crypto';
@@ -112,8 +112,9 @@ function inngestServe({
 }
 
 const openai$1 = createOpenAI$1({
-  baseURL: process.env.MICROSOFT_FOUNDRY_API_BASE_URL || void 0,
-  apiKey: process.env.MICROSOFT_FOUNDRY_API_KEY || process.env.OPENAI_API_KEY
+  baseURL: "https://jerem-md7wzrrg-eastus2.services.ai.azure.com/openai/v1/",
+  apiKey: process.env.MICROSOFT_FOUNDRY_API_KEY
+  // set to GGfDHSf8...
 });
 const seoAgent = new Agent({
   name: "SEO Orchestrator Agent",
@@ -139,9 +140,9 @@ When responding:
 - Always explain your findings in clear, business-focused language
 
 Remember: Your goal is to improve website visibility, drive qualified traffic, and increase conversions through data-driven SEO strategies.`,
-  // Use gpt-4o for reliable performance with Microsoft Foundry
-  // For GPT-5 models, ensure MICROSOFT_FOUNDRY_API_BASE_URL points to your deployment
-  model: openai$1("gpt-4o"),
+  // Use gpt-5-mini deployed via Azure AI Foundry
+  // Ensure MICROSOFT_FOUNDRY_API_BASE_URL targets your Foundry project endpoint
+  model: openai$1("gpt-5-mini"),
   tools: {
     seoAnalysisTool,
     analyticsTool,
@@ -284,7 +285,7 @@ const collectAnalyticsData = createStep({
       ${inputData.seoAnalysis}
       
       Please:
-      1. Use the realAnalyticsTool to fetch data from ALL platforms: google_analytics, meta_pixel, tiktok_pixel, microsoft_clarity
+      1. Use the realAnalyticsTool to fetch data from ALL platforms: google_analytics, google_search_console, meta_pixel, tiktok_pixel, microsoft_clarity
       2. Request all metrics: traffic, conversions, engagement, behavior
       3. For time range, use: last-30-days
       
@@ -295,6 +296,7 @@ const collectAnalyticsData = createStep({
       - Understand user behavior and engagement patterns
       - Identify conversion opportunities
       - Spot technical issues (rage clicks, dead clicks from Clarity)
+      - Surface search visibility gaps (queries, pages, CTR from Search Console)
       - Recommend specific optimizations
       
       Provide actionable insights based on the data structure.
@@ -303,12 +305,13 @@ const collectAnalyticsData = createStep({
       { role: "user", content: prompt }
     ]);
     try {
+      const platformSummary = response.text;
       await storeAnalyticsData({
         source: "multi_platform",
         metric_type: "aggregated_analytics",
         date: (/* @__PURE__ */ new Date()).toISOString(),
         data: {
-          insights: response.text,
+          insights: platformSummary,
           timestamp: (/* @__PURE__ */ new Date()).toISOString()
         }
       });

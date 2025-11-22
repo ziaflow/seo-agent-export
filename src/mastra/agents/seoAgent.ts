@@ -17,11 +17,10 @@ import { createOpenAI } from "@ai-sdk/openai";
  * Coordinates SEO analysis, data collection, and content generation
  */
 
-// Configure with Microsoft Foundry or OpenAI
-// Falls back to regular OpenAI if Foundry not configured
+// Configure with Microsoft Foundry (preferred) or fall back to OpenAI
 const openai = createOpenAI({
-  baseURL: process.env.MICROSOFT_FOUNDRY_API_BASE_URL || undefined,
-  apiKey: process.env.MICROSOFT_FOUNDRY_API_KEY || process.env.OPENAI_API_KEY,
+  baseURL: "https://jerem-md7wzrrg-eastus2.services.ai.azure.com/openai/v1/",
+  apiKey: process.env.MICROSOFT_FOUNDRY_API_KEY, // set to GGfDHSf8...
 });
 
 export const seoAgent = new Agent({
@@ -50,9 +49,9 @@ When responding:
 
 Remember: Your goal is to improve website visibility, drive qualified traffic, and increase conversions through data-driven SEO strategies.`,
 
-  // Use gpt-4o for reliable performance with Microsoft Foundry
-  // For GPT-5 models, ensure MICROSOFT_FOUNDRY_API_BASE_URL points to your deployment
-  model: openai("gpt-4o"),
+  // Use gpt-5-mini deployed via Azure AI Foundry
+  // Ensure MICROSOFT_FOUNDRY_API_BASE_URL targets your Foundry project endpoint
+  model: openai("gpt-5-mini"),
 
   tools: {
     seoAnalysisTool,
