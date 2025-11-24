@@ -41,13 +41,13 @@ async function fetchGoogleAnalytics(config: GoogleAnalyticsConfig, timeRange: st
   if (!config.propertyId || !process.env.GOOGLE_ANALYTICS_PROPERTY_ID) {
     logger.warn("Google Analytics not configured, using mock data");
     return {
-      sessions: 2500,
-      users: 1850,
-      pageviews: 8500,
-      bounceRate: 42,
-      avgSessionDuration: 204,
-      conversions: 45,
-      conversionRate: 1.8,
+      sessions: 3200,
+      users: 2100,
+      pageviews: 9800,
+      bounceRate: 38,
+      avgSessionDuration: 245,
+      conversions: 52,
+      conversionRate: 2.1,
     };
   }
 
@@ -209,18 +209,19 @@ async function fetchGoogleSearchConsoleData(
   if (!config.siteUrl || !process.env.GOOGLE_SEARCH_CONSOLE_SITE_URL) {
     logger.warn("Google Search Console not configured, using mock data");
     return {
-      clicks: 980,
-      impressions: 42500,
-      ctr: 2.3,
-      averagePosition: 18.4,
+      clicks: 1250,
+      impressions: 48500,
+      ctr: 2.6,
+      averagePosition: 16.2,
       topQueries: [
-        { query: "seo automation", clicks: 210, impressions: 5400 },
-        { query: "content optimization", clicks: 145, impressions: 4800 },
-        { query: "keyword radar", clicks: 120, impressions: 3900 },
+        { query: "phoenix web development", clicks: 280, impressions: 6200 },
+        { query: "seo services phoenix", clicks: 195, impressions: 5100 },
+        { query: "marketing automation arizona", clicks: 145, impressions: 4200 },
       ],
       topPages: [
-        { url: "/blog/seo-automation", clicks: 190, impressions: 5100 },
-        { url: "/services/content-optimization", clicks: 165, impressions: 4600 },
+        { url: "/services/web-development", clicks: 210, impressions: 5800 },
+        { url: "/services/seo", clicks: 185, impressions: 5200 },
+        { url: "/services/automation", clicks: 140, impressions: 3800 },
       ],
     };
   }
