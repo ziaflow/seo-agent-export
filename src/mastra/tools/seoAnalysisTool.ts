@@ -12,7 +12,7 @@ export const seoAnalysisTool = createTool({
   inputSchema: z.object({
     websiteUrl: z.string().describe("The URL of the website to analyze"),
     analysisType: z
-      .enum(["on-page", "technical", "structure", "all"])
+      .enum(["on-page", "technical", "structure", "astro", "all"])
       .describe("Type of SEO analysis to perform"),
   }),
   outputSchema: z.object({
@@ -107,6 +107,36 @@ export const seoAnalysisTool = createTool({
           issue: "Some pages have no internal links",
           recommendation:
             "Establish clear internal linking strategy for content discovery",
+        }
+      );
+    }
+
+    if (
+      context.analysisType === "astro" ||
+      context.analysisType === "all"
+    ) {
+      logger?.info("🚀 [SEO Analysis] Analyzing Astro JS specific optimizations");
+      issues.push(
+        {
+          category: "Astro Optimization",
+          severity: "medium" as const,
+          issue: "Verify View Transitions usage",
+          recommendation:
+            "Check if View Transitions are enabled. If not, enable them for smoother navigation and reduced perceived latency.",
+        },
+        {
+          category: "Astro Optimization",
+          severity: "low" as const,
+          issue: "Client-side hydration check",
+          recommendation:
+            "Audit 'client:*' directives. Ensure 'client:load' is only used when absolutely necessary; prefer 'client:visible' or 'client:idle'.",
+        },
+        {
+          category: "Image Optimization",
+          severity: "high" as const,
+          issue: "Verify Astro Image component usage",
+          recommendation:
+            "Confirm that the <Image /> component from 'astro:assets' is used for all local images to ensure automatic AVIF/WebP optimization.",
         }
       );
     }

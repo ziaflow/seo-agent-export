@@ -23,7 +23,7 @@ const analyzeSeoDemands = createStep({
     websiteUrl: z
       .string()
       .optional()
-      .describe("Website URL to analyze (default: example.com)"),
+      .describe("Website URL to analyze (default: https://ziaflow.com)"),
   }),
   outputSchema: z.object({
     seoAnalysis: z.string(),
@@ -34,17 +34,18 @@ const analyzeSeoDemands = createStep({
     const logger = mastra?.getLogger();
     logger?.info("🚀 [SEO Workflow] Step 1: Analyzing SEO metrics...");
 
-    const url = inputData.websiteUrl || "https://example.com";
+    const url = inputData.websiteUrl || "https://ziaflow.com";
     const prompt = `
       Perform a comprehensive SEO analysis for ${url}.
       
       Please:
       1. Use the seoAnalysisTool to audit on-page, technical, and structural elements
-      2. Identify critical issues that need immediate attention
-      3. Provide a summary of findings and recommendations
-      4. Suggest priority actions for improvement
+      2. specifically run the 'astro' analysis type to check for Astro JS optimizations
+      3. Identify critical issues that need immediate attention, including Astro-specific View Transitions and Image component usage
+      4. Provide a summary of findings and recommendations
+      5. Suggest priority actions for improvement
       
-      Format your response as a structured SEO audit report.
+      Format your response as a structured SEO audit report, highlighting Astro JS opportunities.
     `;
 
     const response = await seoAgent.generateLegacy([
@@ -152,7 +153,7 @@ const collectAnalyticsData = createStep({
     logger?.info("📊 [SEO Workflow] Step 2: Collecting analytics data...");
 
     const prompt = `
-      Based on the SEO analysis provided, perform a comprehensive analytics review:
+      Based on the SEO analysis provided, perform a comprehensive analytics review for ZiaFlow.com:
       
       SEO Analysis Context:
       ${inputData.seoAnalysis}
@@ -166,13 +167,13 @@ const collectAnalyticsData = createStep({
       When API credentials are configured, it will fetch real data from these platforms.
       
       Analyze the data to:
-      - Understand user behavior and engagement patterns
-      - Identify conversion opportunities
+      - Understand user behavior and engagement patterns on ZiaFlow's site
+      - Identify conversion opportunities for web development and SEO services
       - Spot technical issues (rage clicks, dead clicks from Clarity)
       - Surface search visibility gaps (queries, pages, CTR from Search Console)
       - Recommend specific optimizations
       
-      Provide actionable insights based on the data structure.
+      Provide actionable insights based on the data structure, specifically tailored for ZiaFlow.com.
     `;
 
     const response = await seoAgent.generateLegacy([
