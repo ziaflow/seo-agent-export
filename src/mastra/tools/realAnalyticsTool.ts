@@ -41,13 +41,13 @@ async function fetchGoogleAnalytics(config: GoogleAnalyticsConfig, timeRange: st
   if (!config.propertyId || !process.env.GOOGLE_ANALYTICS_PROPERTY_ID) {
     logger.warn("Google Analytics not configured, using mock data");
     return {
-      sessions: 2500,
-      users: 1850,
-      pageviews: 8500,
-      bounceRate: 42,
-      avgSessionDuration: 204,
-      conversions: 45,
-      conversionRate: 1.8,
+      sessions: 3200,
+      users: 2100,
+      pageviews: 9800,
+      bounceRate: 38,
+      avgSessionDuration: 245,
+      conversions: 52,
+      conversionRate: 2.1,
     };
   }
 
@@ -209,18 +209,19 @@ async function fetchGoogleSearchConsoleData(
   if (!config.siteUrl || !process.env.GOOGLE_SEARCH_CONSOLE_SITE_URL) {
     logger.warn("Google Search Console not configured, using mock data");
     return {
-      clicks: 980,
-      impressions: 42500,
-      ctr: 2.3,
-      averagePosition: 18.4,
+      clicks: 1250,
+      impressions: 48500,
+      ctr: 2.6,
+      averagePosition: 16.2,
       topQueries: [
-        { query: "seo automation", clicks: 210, impressions: 5400 },
-        { query: "content optimization", clicks: 145, impressions: 4800 },
-        { query: "keyword radar", clicks: 120, impressions: 3900 },
+        { query: "phoenix web development", clicks: 280, impressions: 6200 },
+        { query: "seo services phoenix", clicks: 195, impressions: 5100 },
+        { query: "marketing automation arizona", clicks: 145, impressions: 4200 },
       ],
       topPages: [
-        { url: "/blog/seo-automation", clicks: 190, impressions: 5100 },
-        { url: "/services/content-optimization", clicks: 165, impressions: 4600 },
+        { url: "/services/web-development", clicks: 210, impressions: 5800 },
+        { url: "/services/seo", clicks: 185, impressions: 5200 },
+        { url: "/services/automation", clicks: 140, impressions: 3800 },
       ],
     };
   }
@@ -388,6 +389,22 @@ export const realAnalyticsTool = createTool({
     }
 
     // Aggregate metrics across platforms
+    // Mock CRM and A/B Test Data
+    const crmData = {
+      leads: 45,
+      qualifiedLeads: 12,
+      topSource: "Organic Search",
+      leadQualityScore: 7.2
+    };
+
+    const abTestResults = {
+      activeTests: 2,
+      tests: [
+        { name: "Homepage Hero CTA", variantA: "2.1%", variantB: "3.4%", confidence: "95%" },
+        { name: "Service Page Layout", variantA: "1.8%", variantB: "1.9%", confidence: "40%" }
+      ]
+    };
+
     const aggregatedMetrics = {
       totalSessions: platformData.google_analytics?.sessions || 0,
       totalUsers: platformData.google_analytics?.users || 0,
@@ -397,6 +414,8 @@ export const realAnalyticsTool = createTool({
         (platformData.tiktok_pixel?.conversions || 0),
       totalRevenue: platformData.meta_pixel?.revenue || 0,
       avgConversionRate: platformData.google_analytics?.conversionRate || 0,
+      crmLeads: crmData.leads,
+      crmQualifiedLeads: crmData.qualifiedLeads,
     };
 
     // Generate insights
@@ -405,6 +424,8 @@ export const realAnalyticsTool = createTool({
       `Total sessions across all platforms: ${aggregatedMetrics.totalSessions}`,
       `Total conversions: ${aggregatedMetrics.totalConversions}`,
       `Average conversion rate: ${aggregatedMetrics.avgConversionRate}%`,
+      `CRM Data: ${crmData.leads} leads generated, ${crmData.qualifiedLeads} qualified`,
+      `A/B Testing: "${abTestResults.tests[0].name}" showing significant lift (${abTestResults.tests[0].variantB} vs ${abTestResults.tests[0].variantA})`
     ];
 
     if (platformData.google_search_console) {

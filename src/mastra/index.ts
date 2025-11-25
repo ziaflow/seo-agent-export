@@ -11,6 +11,19 @@ import { sharedPostgresStorage } from "./storage";
 import { inngest, inngestServe, registerCronWorkflow } from "./inngest";
 import { seoWorkflow } from "./workflows/seoWorkflow";
 import { seoAgent } from "./agents/seoAgent";
+import { astroDeveloperAgent } from "./agents/astroDeveloperAgent";
+import { croAnalystAgent } from "./agents/croAnalystAgent";
+
+import { azureFoundryTool } from "./tools/azureFoundryTool";
+import { playwrightTool } from "./tools/playwrightTool";
+import { azureCloudTool } from "./tools/azureCloudTool";
+import { githubTool } from "./tools/githubTool";
+import { chromeDevTool } from "./tools/chromeDevTool";
+import { storybookTool } from "./tools/storybookTool";
+import { googleAnalyticsTool } from "./tools/googleAnalyticsTool";
+import { geminiCloudTool } from "./tools/geminiCloudTool";
+import { microsoftLearnTool } from "./tools/microsoftLearnTool";
+import { microsoftClarityTool } from "./tools/microsoftClarityTool";
 
 class ProductionPinoLogger extends MastraLogger {
   protected logger: pino.Logger;
@@ -60,12 +73,25 @@ export const mastra = new Mastra({
   },
   agents: {
     seoAgent,
+    astroDeveloperAgent,
+    croAnalystAgent,
   },
   mcpServers: {
     allTools: new MCPServer({
       name: "allTools",
       version: "1.0.0",
-      tools: {},
+      tools: {
+        azureFoundryTool,
+        playwrightTool,
+        azureCloudTool,
+        githubTool,
+        chromeDevTool,
+        storybookTool,
+        googleAnalyticsTool,
+        geminiCloudTool,
+        microsoftLearnTool,
+        microsoftClarityTool,
+      },
     }),
   },
   bundler: {
