@@ -42,27 +42,76 @@ export const seoAnalysisTool = createTool({
       recommendation: string;
     }> = [];
 
-    // Simulate SEO analysis based on type
+    let html = "";
+    try {
+        const response = await fetch(context.websiteUrl);
+        html = await response.text();
+    } catch (error) {
+        logger?.error("Failed to fetch website", { error });
+        issues.push({
+            category: "Accessibility",
+            severity: "critical",
+            issue: "Website is not accessible",
+            recommendation: "Check server status and DNS configuration",
+        });
+        return {
+            analysisType: context.analysisType,
+            issues,
+            score: 0,
+            summary: "Failed to access website.",
+        };
+    }
+
+    // Real analysis logic
     if (
       context.analysisType === "on-page" ||
       context.analysisType === "all"
     ) {
       logger?.info("📄 [SEO Analysis] Analyzing on-page elements");
-      issues.push(
-        {
-          category: "Meta Tags",
-          severity: "high" as const,
-          issue: "Missing meta description on homepage",
-          recommendation:
-            "Add a compelling meta description (120-160 characters)",
-        },
-        {
-          category: "Headings",
-          severity: "medium" as const,
-          issue: "Multiple H1 tags found on page",
-          recommendation: "Use only one H1 tag per page for optimal SEO",
-        }
-      );
+      
+      const titleMatch = html.match(/<title>(.*?)<\/title>/i);
+      if (!titleMatch || !titleMatch[1]) {
+          issues.push({
+              category: "Meta Tags",
+              severity: "high",
+              issue: "Missing title tag",
+              recommendation: "Add a descriptive title tag.",
+          });
+      } else if (titleMatch[1].length < 10 || titleMatch[1].length > 60) {
+           issues.push({
+              category: "Meta Tags",
+              severity: "medium",
+              issue: `Title tag length is ${titleMatch[1].length} characters (recommended: 10-60)`,
+              recommendation: "Optimize title tag length.",
+          });
+      }
+
+      const metaDescMatch = html.match(/<meta\s+name=["']description["']\s+content=["'](.*?)["']/i);
+      if (!metaDescMatch || !metaDescMatch[1]) {
+          issues.push({
+              category: "Meta Tags",
+              severity: "high",
+              issue: "Missing meta description",
+              recommendation: "Add a compelling meta description (120-160 characters).",
+          });
+      }
+
+      const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/gi);
+      if (!h1Match) {
+          issues.push({
+              category: "Headings",
+              severity: "high",
+              issue: "Missing H1 tag",
+              recommendation: "Add exactly one H1 tag per page.",
+          });
+      } else if (h1Match.length > 1) {
+          issues.push({
+              category: "Headings",
+              severity: "medium",
+              issue: `Found ${h1Match.length} H1 tags`,
+              recommendation: "Use only one H1 tag per page.",
+          });
+      }
     }
 
     if (
@@ -70,22 +119,15 @@ export const seoAnalysisTool = createTool({
       context.analysisType === "all"
     ) {
       logger?.info("⚙️ [SEO Analysis] Analyzing technical SEO");
-      issues.push(
-        {
-          category: "Core Web Vitals",
-          severity: "critical" as const,
-          issue: "Largest Contentful Paint (LCP) exceeds 4 seconds",
-          recommendation:
-            "Optimize image sizes, implement lazy loading, and reduce server response time",
-        },
-        {
-          category: "Mobile Friendliness",
-          severity: "high" as const,
-          issue: "Viewport meta tag not configured properly",
-          recommendation:
-            "Add proper viewport configuration for mobile devices",
-        }
-      );
+      // Basic check for viewport
+      if (!html.includes('name="viewport"')) {
+           issues.push({
+              category: "Mobile Friendliness",
+              severity: "high",
+              issue: "Viewport meta tag missing",
+              recommendation: "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+          });
+      }
     }
 
     if (
@@ -93,22 +135,15 @@ export const seoAnalysisTool = createTool({
       context.analysisType === "all"
     ) {
       logger?.info("🏗️ [SEO Analysis] Analyzing site structure");
-      issues.push(
-        {
+      // Basic check for URL structure (context.websiteUrl)
+      if (context.websiteUrl.includes('_')) {
+        issues.push({
           category: "URL Structure",
-          severity: "medium" as const,
-          issue: "URLs contain unnecessary parameters and special characters",
-          recommendation:
-            "Use clean, descriptive URLs with hyphens instead of underscores",
-        },
-        {
-          category: "Internal Linking",
-          severity: "medium" as const,
-          issue: "Some pages have no internal links",
-          recommendation:
-            "Establish clear internal linking strategy for content discovery",
-        }
-      );
+          severity: "medium",
+          issue: "URL contains underscores",
+          recommendation: "Use hyphens instead of underscores in URLs.",
+        });
+      }
     }
 
     if (
@@ -116,32 +151,23 @@ export const seoAnalysisTool = createTool({
       context.analysisType === "all"
     ) {
       logger?.info("🚀 [SEO Analysis] Analyzing Astro JS specific optimizations");
-      issues.push(
-        {
-          category: "Astro Optimization",
-          severity: "medium" as const,
-          issue: "Verify View Transitions usage",
-          recommendation:
-            "Check if View Transitions are enabled. If not, enable them for smoother navigation and reduced perceived latency.",
-        },
-        {
-          category: "Astro Optimization",
-          severity: "low" as const,
-          issue: "Client-side hydration check",
-          recommendation:
-            "Audit 'client:*' directives. Ensure 'client:load' is only used when absolutely necessary; prefer 'client:visible' or 'client:idle'.",
-        },
-        {
-          category: "Image Optimization",
-          severity: "high" as const,
-          issue: "Verify Astro Image component usage",
-          recommendation:
-            "Confirm that the <Image /> component from 'astro:assets' is used for all local images to ensure automatic AVIF/WebP optimization.",
-        }
-      );
+      // Simple check for Astro generator tag
+      if (!html.includes('name="generator" content="Astro')) {
+          // Not necessarily an issue if they hid it, but good to note
+      }
+      
+      // Check for client directives
+      if (html.includes('client:load')) {
+           issues.push({
+              category: "Astro Optimization",
+              severity: "low",
+              issue: "Found client:load directive",
+              recommendation: "Ensure client:load is necessary; prefer client:visible or client:idle.",
+          });
+      }
     }
 
-    const score = Math.max(40, 100 - issues.length * 8);
+    const score = Math.max(0, 100 - issues.length * 10);
     logger?.info("✅ [SEO Analysis] Analysis complete", { score });
 
     return {

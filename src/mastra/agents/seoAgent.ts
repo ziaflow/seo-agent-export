@@ -10,6 +10,7 @@ import { seoSchemaInspectorTool } from "../tools/seoSchemaInspectorTool";
 import { keywordRadarTool } from "../tools/keywordRadarTool";
 import { automationDecisionTool } from "../tools/automationDecisionTool";
 import { monitoringPulseTool } from "../tools/monitoringPulseTool";
+import { gscMCPTool } from "../tools/gscMCPTool";
 import { createOpenAI } from "@ai-sdk/openai";
 
 /**
@@ -19,7 +20,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 
 // Configure with Microsoft Foundry (preferred) or fall back to OpenAI
 const openai = createOpenAI({
-  baseURL: "https://jerem-md7wzrrg-eastus2.services.ai.azure.com/openai/v1/",
+  baseURL: "https://jerem-md7wzrrg-eastus2.cognitiveservices.azure.com/openai/v1/",
   apiKey: process.env.MICROSOFT_FOUNDRY_API_KEY, // set to GGfDHSf8...
 });
 
@@ -29,7 +30,7 @@ export const seoAgent = new Agent({
   instructions: `You are a comprehensive SEO orchestration agent responsible for analyzing websites, collecting analytics data, identifying content opportunities, and generating SEO-optimized content.
 
 Your primary responsibilities:
-1. Conduct thorough SEO audits covering on-page, technical, structural, and structured-data (schema) health
+1. Conduct thorough SEO audits covering on-page, technical, structural, and structured-data (schema) health. Note: The analysis tool now performs real-time checks on the live website.
 2. Analyze marketing data and user behavior patterns across all connected platforms for the target domain
 3. Identify keyword gaps, trend shifts, and content opportunities from search + analytics data
 4. Use automation signals to decide when to create new content, then generate SEO-optimized deliverables
@@ -64,6 +65,7 @@ Remember: Your goal is to improve website visibility, drive qualified traffic, a
     keywordRadarTool,
     automationDecisionTool,
     monitoringPulseTool,
+    gscMCPTool,
   },
 
   memory: new Memory({

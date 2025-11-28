@@ -14,17 +14,30 @@ import { realtimeMiddleware } from '@inngest/realtime';
 import { serve as serve$1, init } from '@mastra/inngest';
 import { Agent, MessageList } from '@mastra/core/agent';
 import { Memory as Memory$1 } from '@mastra/memory';
-import { seoAnalysisTool } from './tools/520b9220-a90b-4f43-974b-c7c4d95d2666.mjs';
-import { analyticsTool } from './tools/3e050bfc-78a2-46af-91fc-724e38c1e2cf.mjs';
-import { realAnalyticsTool } from './tools/7a8c92a3-4410-4cc4-b3db-19fc277800a6.mjs';
-import { searchQueryTool } from './tools/b714fc1d-0c60-4614-8ecb-472ba3edae19.mjs';
-import { contentGenerationTool } from './tools/ce03a4bb-f928-436f-b307-886791d54479.mjs';
-import { seoSchemaInspectorTool } from './tools/9c368a28-d379-4281-9e0b-a9903e3b405d.mjs';
-import { keywordRadarTool } from './tools/b7fb81fd-1989-4418-b7f9-e804b7e705b0.mjs';
-import { automationDecisionTool } from './tools/0a7d2404-e63e-412c-8cc0-f401a2ecd734.mjs';
-import { monitoringPulseTool } from './tools/1cb9df4c-cd20-46df-b9aa-8ca98bd09729.mjs';
+import { seoAnalysisTool } from './tools/645bc7ed-1ac1-4fb2-bd9a-40d30513bed0.mjs';
+import { analyticsTool } from './tools/e7271ec6-e634-4829-a039-45b9802c0ff0.mjs';
+import { realAnalyticsTool } from './tools/3839c857-8593-4708-9927-d673b285592b.mjs';
+import { searchQueryTool } from './tools/ed5a645a-26a6-45ef-b9e8-5fdab2b2f64c.mjs';
+import { contentGenerationTool } from './tools/5e7ddf4c-dbe5-43de-b787-d0413c657677.mjs';
+import { seoSchemaInspectorTool } from './tools/6593f47d-5a3e-4938-a9fd-ba2b1ac2ac81.mjs';
+import { keywordRadarTool } from './tools/bfa7ec2a-baf1-454a-9ff1-93d623b618fd.mjs';
+import { automationDecisionTool } from './tools/a33f4674-0eda-4d5a-9939-9990739d2bf2.mjs';
+import { monitoringPulseTool } from './tools/67363779-7879-40e5-ba43-b78edee8ac00.mjs';
+import { createTool, isVercelTool, Tool } from '@mastra/core/tools';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { createOpenAI as createOpenAI$1 } from '@ai-sdk/openai';
 import { d as storeSeoAudit, c as storeSeoSchemaSnapshot, e as storeAnalyticsData, f as storeContentOpportunity, s as storeAutomationDecision, g as storeGeneratedContent, b as storeMonitoringPulse } from './analyticsDb.mjs';
+import { googleAnalyticsTool } from './tools/603fdc11-2ae1-4ead-a85c-d3014391ffe3.mjs';
+import { microsoftClarityTool } from './tools/0a9cf3ec-523d-4305-ade2-62d52d8a7de6.mjs';
+import { githubTool } from './tools/bbeab54b-8205-4bbf-9492-13e8d4d2d054.mjs';
+import { playwrightTool } from './tools/dd2b0e41-6241-40a8-bb55-c50c955e28f7.mjs';
+import { azureFoundryTool } from './tools/65e97dce-8094-4ef9-8d2d-09a7d5619355.mjs';
+import { azureCloudTool } from './tools/ce69375a-a644-4a30-a15a-389024daf3b3.mjs';
+import { chromeDevTool } from './tools/95bee3c6-34c3-4f53-8e7a-4f2a5e9851ed.mjs';
+import { storybookTool } from './tools/0da0bb56-3657-4e50-ae19-a974ac5c7b8d.mjs';
+import { geminiCloudTool } from './tools/09867cb2-1174-413e-8722-b90e7a30f5c2.mjs';
+import { microsoftLearnTool } from './tools/b1bb2ec7-c268-4f6d-a8f0-5ec5e395a6e5.mjs';
 import crypto$1, { randomUUID } from 'crypto';
 import { readdir, readFile, mkdtemp, rm, writeFile, mkdir, copyFile, stat } from 'fs/promises';
 import * as https from 'https';
@@ -36,7 +49,6 @@ import { existsSync, readFileSync, createReadStream, lstatSync } from 'fs';
 import { join, resolve as resolve$2, dirname, extname, basename, isAbsolute, relative } from 'path';
 import { RuntimeContext } from '@mastra/core/runtime-context';
 import { Telemetry } from '@mastra/core/telemetry';
-import { createTool, isVercelTool, Tool } from '@mastra/core/tools';
 import { ModelRouterLanguageModel, PROVIDER_REGISTRY, getProviderConfig } from '@mastra/core/llm';
 import { ChunkFrom } from '@mastra/core/stream';
 import util, { promisify } from 'util';
@@ -111,8 +123,55 @@ function inngestServe({
   });
 }
 
-const openai$1 = createOpenAI$1({
-  baseURL: "https://jerem-md7wzrrg-eastus2.services.ai.azure.com/openai/v1/",
+const gscMCPTool = createTool({
+  id: "gsc-mcp",
+  description: "Access Google Search Console (GSC) data. Check performance, URL indexing, and sitemaps.",
+  inputSchema: z.object({
+    toolName: z.string().describe("The name of the tool to call (e.g., 'performance_report', 'inspect_url')"),
+    arguments: z.string().describe("JSON string of arguments for the tool")
+  }),
+  outputSchema: z.object({
+    result: z.any()
+  }),
+  execute: async ({ context, mastra }) => {
+    const transport = new StdioClientTransport({
+      command: "npx",
+      args: ["-y", "github:AminForou/mcp-gsc"],
+      // Attempting to run from GitHub
+      env: {
+        ...process.env,
+        PATH: process.env.PATH || ""
+      }
+    });
+    const client = new Client(
+      {
+        name: "mastra-gsc-client",
+        version: "1.0.0"
+      },
+      {
+        capabilities: {}
+      }
+    );
+    try {
+      await client.connect(transport);
+      const args = JSON.parse(context.arguments);
+      const result = await client.callTool({
+        name: context.toolName,
+        arguments: args
+      });
+      return {
+        result
+      };
+    } catch (error) {
+      throw new Error(`GSC MCP Error: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      await client.close();
+    }
+  }
+});
+
+const openai$5 = createOpenAI$1({
+  baseURL: "https://jerem-md7wzrrg-eastus2.cognitiveservices.azure.com/openai/v1/",
   apiKey: process.env.MICROSOFT_FOUNDRY_API_KEY
   // set to GGfDHSf8...
 });
@@ -121,11 +180,12 @@ const seoAgent = new Agent({
   instructions: `You are a comprehensive SEO orchestration agent responsible for analyzing websites, collecting analytics data, identifying content opportunities, and generating SEO-optimized content.
 
 Your primary responsibilities:
-1. Conduct thorough SEO audits covering on-page, technical, structural, and structured-data (schema) health
-2. Analyze marketing data and user behavior patterns across all connected platforms
+1. Conduct thorough SEO audits covering on-page, technical, structural, and structured-data (schema) health. Note: The analysis tool now performs real-time checks on the live website.
+2. Analyze marketing data and user behavior patterns across all connected platforms for the target domain
 3. Identify keyword gaps, trend shifts, and content opportunities from search + analytics data
 4. Use automation signals to decide when to create new content, then generate SEO-optimized deliverables
 5. Emit monitoring pulses when anomalies or critical issues are detected so near-real-time agents can react
+6. Provide expert recommendations for Astro JS websites, focusing on View Transitions, Island Architecture (partial hydration), and Image optimization
 
 When responding:
 - Use the appropriate tools to gather comprehensive data
@@ -142,7 +202,7 @@ When responding:
 Remember: Your goal is to improve website visibility, drive qualified traffic, and increase conversions through data-driven SEO strategies.`,
   // Use gpt-5-mini deployed via Azure AI Foundry
   // Ensure MICROSOFT_FOUNDRY_API_BASE_URL targets your Foundry project endpoint
-  model: openai$1("gpt-5-mini"),
+  model: openai$5("gpt-5-mini"),
   tools: {
     seoAnalysisTool,
     analyticsTool,
@@ -152,7 +212,8 @@ Remember: Your goal is to improve website visibility, drive qualified traffic, a
     seoSchemaInspectorTool,
     keywordRadarTool,
     automationDecisionTool,
-    monitoringPulseTool
+    monitoringPulseTool,
+    gscMCPTool
   },
   memory: new Memory$1({
     options: {
@@ -169,7 +230,7 @@ const analyzeSeoDemands = createStep({
   id: "analyze-seo",
   description: "Analyzes website SEO including on-page, technical, and structural elements",
   inputSchema: z.object({
-    websiteUrl: z.string().optional().describe("Website URL to analyze (default: example.com)")
+    websiteUrl: z.string().optional().describe("Website URL to analyze (default: https://ziaflow.com)")
   }),
   outputSchema: z.object({
     seoAnalysis: z.string(),
@@ -179,17 +240,18 @@ const analyzeSeoDemands = createStep({
   execute: async ({ inputData, mastra }) => {
     const logger = mastra?.getLogger();
     logger?.info("\u{1F680} [SEO Workflow] Step 1: Analyzing SEO metrics...");
-    const url = inputData.websiteUrl || "https://example.com";
+    const url = inputData.websiteUrl || "https://ziaflow.com";
     const prompt = `
       Perform a comprehensive SEO analysis for ${url}.
       
       Please:
       1. Use the seoAnalysisTool to audit on-page, technical, and structural elements
-      2. Identify critical issues that need immediate attention
-      3. Provide a summary of findings and recommendations
-      4. Suggest priority actions for improvement
+      2. specifically run the 'astro' analysis type to check for Astro JS optimizations
+      3. Identify critical issues that need immediate attention, including Astro-specific View Transitions and Image component usage
+      4. Provide a summary of findings and recommendations
+      5. Suggest priority actions for improvement
       
-      Format your response as a structured SEO audit report.
+      Format your response as a structured SEO audit report, highlighting Astro JS opportunities.
     `;
     const response = await seoAgent.generateLegacy([
       { role: "user", content: prompt }
@@ -279,7 +341,7 @@ const collectAnalyticsData = createStep({
     const logger = mastra?.getLogger();
     logger?.info("\u{1F4CA} [SEO Workflow] Step 2: Collecting analytics data...");
     const prompt = `
-      Based on the SEO analysis provided, perform a comprehensive analytics review:
+      Based on the SEO analysis provided, perform a comprehensive analytics review for ZiaFlow.com:
       
       SEO Analysis Context:
       ${inputData.seoAnalysis}
@@ -293,13 +355,13 @@ const collectAnalyticsData = createStep({
       When API credentials are configured, it will fetch real data from these platforms.
       
       Analyze the data to:
-      - Understand user behavior and engagement patterns
-      - Identify conversion opportunities
+      - Understand user behavior and engagement patterns on ZiaFlow's site
+      - Identify conversion opportunities for web development and SEO services
       - Spot technical issues (rage clicks, dead clicks from Clarity)
       - Surface search visibility gaps (queries, pages, CTR from Search Console)
       - Recommend specific optimizations
       
-      Provide actionable insights based on the data structure.
+      Provide actionable insights based on the data structure, specifically tailored for ZiaFlow.com.
     `;
     const response = await seoAgent.generateLegacy([
       { role: "user", content: prompt }
@@ -637,19 +699,319 @@ const seoWorkflow = createWorkflow({
   })
 }).then(analyzeSeoDemands).then(validateSeoSchema).then(collectAnalyticsData).then(identifyContentOpportunities).then(evaluateAutomationDecision).then(generateSeoContent).then(generateFinalReport).then(emitMonitoringPulse).commit();
 
+const delegateTool = createTool({
+  id: "delegate-task",
+  description: "Delegate a task to another agent",
+  inputSchema: z.object({
+    agentName: z.enum(["SEO Orchestrator Agent", "Analytics Agent", "CRO Agent", "Web Dev Agent"]).describe("Name of the agent to delegate to"),
+    task: z.string().describe("The task or question for the target agent")
+  }),
+  outputSchema: z.object({
+    response: z.string()
+  }),
+  execute: async ({ context, mastra }) => {
+    const logger = mastra?.getLogger();
+    logger?.info(`Delegating to ${context.agentName}`, { task: context.task });
+    const agent = mastra?.getAgent(context.agentName);
+    if (!agent) {
+      throw new Error(`Agent ${context.agentName} not found`);
+    }
+    const result = await agent.generate(context.task);
+    return {
+      response: result.text
+    };
+  }
+});
+
+const openai$4 = createOpenAI$1({
+  baseURL: "https://jerem-md7wzrrg-eastus2.cognitiveservices.azure.com/openai/v1/",
+  apiKey: process.env.MICROSOFT_FOUNDRY_API_KEY
+});
+const managerAgent = new Agent({
+  name: "Manager Agent",
+  instructions: `You are the Manager of a digital marketing team. Your goal is to orchestrate the efforts of your specialist agents to achieve high-level objectives.
+  
+  Your Team:
+  - **SEO Orchestrator Agent**: Handles technical SEO, keywords, and on-page analysis.
+  - **Analytics Agent**: Analyzes traffic, user behavior, and data trends.
+  - **CRO Agent**: Optimizes for conversions and user experience.
+  - **Web Dev Agent**: Handles implementation, testing, and code reviews.
+  
+  Workflow:
+  1. Receive a high-level goal from the user (e.g., "Why did traffic drop?").
+  2. Break it down into sub-tasks.
+  3. Delegate sub-tasks to the appropriate specialists using the \`delegate-task\` tool.
+  4. Synthesize their responses into a comprehensive report for the user.
+  
+  Always provide a clear summary of what your team found and what actions are recommended.`,
+  model: openai$4("gpt-5-mini"),
+  tools: {
+    delegateTool
+  },
+  memory: new Memory$1({
+    options: {
+      lastMessages: 20
+    },
+    storage: sharedPostgresStorage
+  })
+});
+
+const clarityMCPTool = createTool({
+  id: "clarity-mcp",
+  description: "Query Microsoft Clarity data using natural language. Ask for heatmaps, session recordings, or user behavior metrics.",
+  inputSchema: z.object({
+    query: z.string().describe("Natural language query for Clarity data (e.g., 'Show me heatmaps for the checkout page', 'Find sessions with dead clicks')")
+  }),
+  outputSchema: z.object({
+    result: z.any()
+  }),
+  execute: async ({ context, mastra }) => {
+    const transport = new StdioClientTransport({
+      command: "npx",
+      args: ["-y", "@microsoft/clarity-mcp-server"],
+      env: {
+        CLARITY_API_TOKEN: process.env.MICROSOFT_CLARITY_API_KEY || "",
+        PATH: process.env.PATH || ""
+        // Ensure PATH is passed for npx
+      }
+    });
+    const client = new Client(
+      {
+        name: "mastra-client",
+        version: "1.0.0"
+      },
+      {
+        capabilities: {}
+      }
+    );
+    try {
+      await client.connect(transport);
+      const result = await client.callTool({
+        name: "query-analytics-dashboard",
+        arguments: {
+          query: context.query
+        }
+      });
+      return {
+        result
+      };
+    } catch (error) {
+      throw new Error(`Clarity MCP Error: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      await client.close();
+    }
+  }
+});
+
+const ga4MCPTool = createTool({
+  id: "ga4-mcp",
+  description: "Access Google Analytics 4 (GA4) data. Run reports, check metadata, and analyze metrics.",
+  inputSchema: z.object({
+    toolName: z.string().describe("The name of the tool to call (e.g., 'run_report', 'list_properties')"),
+    arguments: z.string().describe("JSON string of arguments for the tool")
+  }),
+  outputSchema: z.object({
+    result: z.any()
+  }),
+  execute: async ({ context, mastra }) => {
+    const transport = new StdioClientTransport({
+      command: "npx",
+      args: ["-y", "github:googleanalytics/google-analytics-mcp"],
+      // Attempting to run from GitHub
+      env: {
+        ...process.env,
+        PATH: process.env.PATH || ""
+      }
+    });
+    const client = new Client(
+      {
+        name: "mastra-ga4-client",
+        version: "1.0.0"
+      },
+      {
+        capabilities: {}
+      }
+    );
+    try {
+      await client.connect(transport);
+      const args = JSON.parse(context.arguments);
+      const result = await client.callTool({
+        name: context.toolName,
+        arguments: args
+      });
+      return {
+        result
+      };
+    } catch (error) {
+      throw new Error(`GA4 MCP Error: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      await client.close();
+    }
+  }
+});
+
+const openai$3 = createOpenAI$1({
+  baseURL: "https://jerem-md7wzrrg-eastus2.cognitiveservices.azure.com/openai/v1/",
+  apiKey: process.env.MICROSOFT_FOUNDRY_API_KEY
+});
+const analyticsAgent = new Agent({
+  name: "Analytics Agent",
+  instructions: `You are an Analytics Specialist. Your role is to analyze data from Google Analytics, Microsoft Clarity, and other sources to identify trends, anomalies, and user behavior patterns.
+  
+  When asked to analyze:
+  1. Use the available tools to fetch real data.
+  2. Look for significant changes (drops, spikes).
+  3. Correlate metrics (e.g., high bounce rate on specific pages).
+  4. Provide data-backed insights, not just raw numbers.`,
+  model: openai$3("gpt-5-mini"),
+  tools: {
+    googleAnalyticsTool,
+    microsoftClarityTool,
+    realAnalyticsTool,
+    clarityMCPTool,
+    ga4MCPTool
+  },
+  memory: new Memory$1({
+    options: {
+      lastMessages: 10
+    },
+    storage: sharedPostgresStorage
+  })
+});
+
+const openai$2 = createOpenAI$1({
+  baseURL: "https://jerem-md7wzrrg-eastus2.cognitiveservices.azure.com/openai/v1/",
+  apiKey: process.env.MICROSOFT_FOUNDRY_API_KEY
+});
+const croAgent = new Agent({
+  name: "CRO Agent",
+  instructions: `You are a Conversion Rate Optimization (CRO) Specialist. Your goal is to improve the percentage of visitors who complete desired actions.
+  
+  Responsibilities:
+  1. Analyze user session recordings and heatmaps (via Clarity tool) to understand friction points.
+  2. Suggest A/B tests or content changes.
+  3. Use the content generation tool to draft improved copy for landing pages.`,
+  model: openai$2("gpt-5-mini"),
+  tools: {
+    microsoftClarityTool,
+    contentGenerationTool,
+    clarityMCPTool
+  },
+  memory: new Memory$1({
+    options: {
+      lastMessages: 10
+    },
+    storage: sharedPostgresStorage
+  })
+});
+
+const gtmMCPTool = createTool({
+  id: "gtm-mcp",
+  description: "Manage Google Tag Manager (GTM). Create tags, list containers, and validate versions.",
+  inputSchema: z.object({
+    toolName: z.string().describe("The name of the tool to call (e.g., 'list_containers', 'create_tag')"),
+    arguments: z.string().describe("JSON string of arguments for the tool")
+  }),
+  outputSchema: z.object({
+    result: z.any()
+  }),
+  execute: async ({ context, mastra }) => {
+    const transport = new StdioClientTransport({
+      command: "npx",
+      args: ["-y", "github:neep305/mcp-for-gtm"],
+      // Attempting to run from GitHub (hypothetical, based on user info)
+      env: {
+        ...process.env,
+        PATH: process.env.PATH || ""
+      }
+    });
+    const client = new Client(
+      {
+        name: "mastra-gtm-client",
+        version: "1.0.0"
+      },
+      {
+        capabilities: {}
+      }
+    );
+    try {
+      await client.connect(transport);
+      const args = JSON.parse(context.arguments);
+      const result = await client.callTool({
+        name: context.toolName,
+        arguments: args
+      });
+      return {
+        result
+      };
+    } catch (error) {
+      throw new Error(`GTM MCP Error: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      await client.close();
+    }
+  }
+});
+
+const openai$1 = createOpenAI$1({
+  baseURL: "https://jerem-md7wzrrg-eastus2.cognitiveservices.azure.com/openai/v1/",
+  apiKey: process.env.MICROSOFT_FOUNDRY_API_KEY
+});
+const webDevAgent = new Agent({
+  name: "Web Dev Agent",
+  instructions: `You are a Senior Web Developer. Your role is to implement changes, review code, and ensure site stability.
+  
+  Responsibilities:
+  1. Review proposed changes for technical feasibility.
+  2. Use Playwright to test pages before and after changes.
+  3. Create GitHub PRs for content or code updates.
+  4. Ensure all changes follow best practices (accessibility, performance).`,
+  model: openai$1("gpt-5-mini"),
+  tools: {
+    githubTool,
+    playwrightTool,
+    gtmMCPTool
+  },
+  memory: new Memory$1({
+    options: {
+      lastMessages: 10
+    },
+    storage: sharedPostgresStorage
+  })
+});
+
 const mastra = new Mastra({
   storage: sharedPostgresStorage,
   workflows: {
     seoWorkflow
   },
   agents: {
-    seoAgent
+    seoAgent,
+    managerAgent,
+    analyticsAgent,
+    croAgent,
+    webDevAgent
   },
   mcpServers: {
     allTools: new MCPServer({
       name: "allTools",
       version: "1.0.0",
-      tools: {}
+      tools: {
+        azureFoundryTool,
+        playwrightTool,
+        azureCloudTool,
+        githubTool,
+        chromeDevTool,
+        storybookTool,
+        googleAnalyticsTool,
+        geminiCloudTool,
+        microsoftLearnTool,
+        microsoftClarityTool,
+        delegateTool,
+        clarityMCPTool,
+        ga4MCPTool,
+        gscMCPTool,
+        gtmMCPTool
+      }
     })
   },
   bundler: {
@@ -707,9 +1069,6 @@ const mastra = new Mastra({
 registerCronWorkflow("0 2 * * *", seoWorkflow);
 if (Object.keys(mastra.getWorkflows()).length > 1) {
   throw new Error("More than 1 workflows found. Currently, more than 1 workflows are not supported in the UI, since doing so will cause app state to be inconsistent.");
-}
-if (Object.keys(mastra.getAgents()).length > 1) {
-  throw new Error("More than 1 agents found. Currently, more than 1 agents are not supported in the UI, since doing so will cause app state to be inconsistent.");
 }
 
 // src/utils/mime.ts

@@ -12,6 +12,11 @@ import { inngest, inngestServe, registerCronWorkflow } from "./inngest";
 import { seoWorkflow } from "./workflows/seoWorkflow";
 import { seoAgent } from "./agents/seoAgent";
 
+import { managerAgent } from "./agents/managerAgent";
+import { analyticsAgent } from "./agents/analyticsAgent";
+import { croAgent } from "./agents/croAgent";
+import { webDevAgent } from "./agents/webDevAgent";
+
 import { azureFoundryTool } from "./tools/azureFoundryTool";
 import { playwrightTool } from "./tools/playwrightTool";
 import { azureCloudTool } from "./tools/azureCloudTool";
@@ -22,6 +27,11 @@ import { googleAnalyticsTool } from "./tools/googleAnalyticsTool";
 import { geminiCloudTool } from "./tools/geminiCloudTool";
 import { microsoftLearnTool } from "./tools/microsoftLearnTool";
 import { microsoftClarityTool } from "./tools/microsoftClarityTool";
+import { delegateTool } from "./tools/delegateTool";
+import { clarityMCPTool } from "./tools/clarityMCPTool";
+import { ga4MCPTool } from "./tools/ga4MCPTool";
+import { gscMCPTool } from "./tools/gscMCPTool";
+import { gtmMCPTool } from "./tools/gtmMCPTool";
 
 class ProductionPinoLogger extends MastraLogger {
   protected logger: pino.Logger;
@@ -71,6 +81,10 @@ export const mastra = new Mastra({
   },
   agents: {
     seoAgent,
+    managerAgent,
+    analyticsAgent,
+    croAgent,
+    webDevAgent,
   },
   mcpServers: {
     allTools: new MCPServer({
@@ -87,6 +101,11 @@ export const mastra = new Mastra({
         geminiCloudTool,
         microsoftLearnTool,
         microsoftClarityTool,
+        delegateTool,
+        clarityMCPTool,
+        ga4MCPTool,
+        gscMCPTool,
+        gtmMCPTool,
       },
     }),
   },
@@ -158,8 +177,9 @@ if (Object.keys(mastra.getWorkflows()).length > 1) {
   );
 }
 
-if (Object.keys(mastra.getAgents()).length > 1) {
-  throw new Error(
-    "More than 1 agents found. Currently, more than 1 agents are not supported in the UI, since doing so will cause app state to be inconsistent.",
-  );
-}
+// Multi-agent check removed to support Manager Agent architecture
+// if (Object.keys(mastra.getAgents()).length > 1) {
+//   throw new Error(
+//     "More than 1 agents found. Currently, more than 1 agents are not supported in the UI, since doing so will cause app state to be inconsistent.",
+//   );
+// }
