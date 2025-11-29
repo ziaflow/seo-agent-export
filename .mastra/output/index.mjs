@@ -14,30 +14,32 @@ import { realtimeMiddleware } from '@inngest/realtime';
 import { serve as serve$1, init } from '@mastra/inngest';
 import { Agent, MessageList } from '@mastra/core/agent';
 import { Memory as Memory$1 } from '@mastra/memory';
-import { seoAnalysisTool } from './tools/645bc7ed-1ac1-4fb2-bd9a-40d30513bed0.mjs';
-import { analyticsTool } from './tools/e7271ec6-e634-4829-a039-45b9802c0ff0.mjs';
-import { realAnalyticsTool } from './tools/3839c857-8593-4708-9927-d673b285592b.mjs';
-import { searchQueryTool } from './tools/ed5a645a-26a6-45ef-b9e8-5fdab2b2f64c.mjs';
-import { contentGenerationTool } from './tools/5e7ddf4c-dbe5-43de-b787-d0413c657677.mjs';
-import { seoSchemaInspectorTool } from './tools/6593f47d-5a3e-4938-a9fd-ba2b1ac2ac81.mjs';
-import { keywordRadarTool } from './tools/bfa7ec2a-baf1-454a-9ff1-93d623b618fd.mjs';
-import { automationDecisionTool } from './tools/a33f4674-0eda-4d5a-9939-9990739d2bf2.mjs';
-import { monitoringPulseTool } from './tools/67363779-7879-40e5-ba43-b78edee8ac00.mjs';
-import { createTool, isVercelTool, Tool } from '@mastra/core/tools';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { seoAnalysisTool } from './tools/fba6ed67-ff0c-4e79-bcbc-82d5ff4e6a16.mjs';
+import { analyticsTool } from './tools/04971c3c-99b1-4fc5-a8c9-608b0dc36aba.mjs';
+import { realAnalyticsTool } from './tools/bc07fac8-f513-4560-87b1-a57301fb216a.mjs';
+import { searchQueryTool } from './tools/4c991f0a-a147-4e9a-90ce-33a3b89bb825.mjs';
+import { contentGenerationTool } from './tools/0d3dc4e9-b0e6-4d31-b025-fe818b8b0793.mjs';
+import { seoSchemaInspectorTool } from './tools/b3e0fd61-b4b0-4b07-8358-e00e91a7efb7.mjs';
+import { keywordRadarTool } from './tools/00555692-e9db-4c65-801b-22b7ea740eaa.mjs';
+import { automationDecisionTool } from './tools/f723efca-f7c8-4d70-9921-0754ca9d2382.mjs';
+import { monitoringPulseTool } from './tools/3c4407a7-33a8-4689-a84d-08e0a8b46b7d.mjs';
+import { gscMCPTool } from './tools/f890ff2e-d709-41df-81f4-925063725e10.mjs';
 import { createOpenAI as createOpenAI$1 } from '@ai-sdk/openai';
 import { d as storeSeoAudit, c as storeSeoSchemaSnapshot, e as storeAnalyticsData, f as storeContentOpportunity, s as storeAutomationDecision, g as storeGeneratedContent, b as storeMonitoringPulse } from './analyticsDb.mjs';
-import { googleAnalyticsTool } from './tools/603fdc11-2ae1-4ead-a85c-d3014391ffe3.mjs';
-import { microsoftClarityTool } from './tools/0a9cf3ec-523d-4305-ade2-62d52d8a7de6.mjs';
-import { githubTool } from './tools/bbeab54b-8205-4bbf-9492-13e8d4d2d054.mjs';
-import { playwrightTool } from './tools/dd2b0e41-6241-40a8-bb55-c50c955e28f7.mjs';
-import { azureFoundryTool } from './tools/65e97dce-8094-4ef9-8d2d-09a7d5619355.mjs';
-import { azureCloudTool } from './tools/ce69375a-a644-4a30-a15a-389024daf3b3.mjs';
-import { chromeDevTool } from './tools/95bee3c6-34c3-4f53-8e7a-4f2a5e9851ed.mjs';
-import { storybookTool } from './tools/0da0bb56-3657-4e50-ae19-a974ac5c7b8d.mjs';
-import { geminiCloudTool } from './tools/09867cb2-1174-413e-8722-b90e7a30f5c2.mjs';
-import { microsoftLearnTool } from './tools/b1bb2ec7-c268-4f6d-a8f0-5ec5e395a6e5.mjs';
+import { delegateTool } from './tools/e418ab85-8716-4802-ad54-68d9cf06bc29.mjs';
+import { googleAnalyticsTool } from './tools/b07da407-7ab1-4f14-9cb9-e58461845690.mjs';
+import { microsoftClarityTool } from './tools/25ab84cd-1193-4c17-9840-6d2758df541e.mjs';
+import { clarityMCPTool } from './tools/f9b067d7-d546-43ba-81b4-61ee2dab1698.mjs';
+import { ga4MCPTool } from './tools/72871571-1936-4026-8611-eef96b57bd0c.mjs';
+import { githubTool } from './tools/11616161-1243-4617-89c9-6641ebe98af6.mjs';
+import { playwrightTool } from './tools/b127ffc0-f53b-458f-b12c-b77387095feb.mjs';
+import { gtmMCPTool } from './tools/605c1d05-86fd-46a3-8e03-36125f362d6d.mjs';
+import { azureFoundryTool } from './tools/d90f9f90-1353-476d-8c73-b2a62966badf.mjs';
+import { azureCloudTool } from './tools/b24d3330-b826-46ee-8b39-bc0ea1686915.mjs';
+import { chromeDevTool } from './tools/f6696b54-aa07-46f4-b929-62c3e28f1a76.mjs';
+import { storybookTool } from './tools/a128fa3f-9f68-4fa9-9c8f-cf91bbfc0eac.mjs';
+import { geminiCloudTool } from './tools/de68fff8-71a4-4b00-98da-54304f1ed3f8.mjs';
+import { microsoftLearnTool } from './tools/ac44276d-a0aa-4673-b535-2bf24c99ed09.mjs';
 import crypto$1, { randomUUID } from 'crypto';
 import { readdir, readFile, mkdtemp, rm, writeFile, mkdir, copyFile, stat } from 'fs/promises';
 import * as https from 'https';
@@ -49,6 +51,7 @@ import { existsSync, readFileSync, createReadStream, lstatSync } from 'fs';
 import { join, resolve as resolve$2, dirname, extname, basename, isAbsolute, relative } from 'path';
 import { RuntimeContext } from '@mastra/core/runtime-context';
 import { Telemetry } from '@mastra/core/telemetry';
+import { createTool, isVercelTool, Tool } from '@mastra/core/tools';
 import { ModelRouterLanguageModel, PROVIDER_REGISTRY, getProviderConfig } from '@mastra/core/llm';
 import { ChunkFrom } from '@mastra/core/stream';
 import util, { promisify } from 'util';
@@ -68,6 +71,8 @@ import { createWorkflow as createWorkflow$1, createStep as createStep$1 } from '
 import { tools } from './tools.mjs';
 import 'axios';
 import 'pg';
+import '@modelcontextprotocol/sdk/client/index.js';
+import '@modelcontextprotocol/sdk/client/stdio.js';
 
 const sharedPostgresStorage = new PostgresStore({
   connectionString: process.env.DATABASE_URL || "postgresql://localhost:5432/mastra"
@@ -122,53 +127,6 @@ function inngestServe({
     registerOptions: { serveHost }
   });
 }
-
-const gscMCPTool = createTool({
-  id: "gsc-mcp",
-  description: "Access Google Search Console (GSC) data. Check performance, URL indexing, and sitemaps.",
-  inputSchema: z.object({
-    toolName: z.string().describe("The name of the tool to call (e.g., 'performance_report', 'inspect_url')"),
-    arguments: z.string().describe("JSON string of arguments for the tool")
-  }),
-  outputSchema: z.object({
-    result: z.any()
-  }),
-  execute: async ({ context, mastra }) => {
-    const transport = new StdioClientTransport({
-      command: "npx",
-      args: ["-y", "github:AminForou/mcp-gsc"],
-      // Attempting to run from GitHub
-      env: {
-        ...process.env,
-        PATH: process.env.PATH || ""
-      }
-    });
-    const client = new Client(
-      {
-        name: "mastra-gsc-client",
-        version: "1.0.0"
-      },
-      {
-        capabilities: {}
-      }
-    );
-    try {
-      await client.connect(transport);
-      const args = JSON.parse(context.arguments);
-      const result = await client.callTool({
-        name: context.toolName,
-        arguments: args
-      });
-      return {
-        result
-      };
-    } catch (error) {
-      throw new Error(`GSC MCP Error: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      await client.close();
-    }
-  }
-});
 
 const openai$5 = createOpenAI$1({
   baseURL: "https://jerem-md7wzrrg-eastus2.cognitiveservices.azure.com/openai/v1/",
@@ -699,30 +657,6 @@ const seoWorkflow = createWorkflow({
   })
 }).then(analyzeSeoDemands).then(validateSeoSchema).then(collectAnalyticsData).then(identifyContentOpportunities).then(evaluateAutomationDecision).then(generateSeoContent).then(generateFinalReport).then(emitMonitoringPulse).commit();
 
-const delegateTool = createTool({
-  id: "delegate-task",
-  description: "Delegate a task to another agent",
-  inputSchema: z.object({
-    agentName: z.enum(["SEO Orchestrator Agent", "Analytics Agent", "CRO Agent", "Web Dev Agent"]).describe("Name of the agent to delegate to"),
-    task: z.string().describe("The task or question for the target agent")
-  }),
-  outputSchema: z.object({
-    response: z.string()
-  }),
-  execute: async ({ context, mastra }) => {
-    const logger = mastra?.getLogger();
-    logger?.info(`Delegating to ${context.agentName}`, { task: context.task });
-    const agent = mastra?.getAgent(context.agentName);
-    if (!agent) {
-      throw new Error(`Agent ${context.agentName} not found`);
-    }
-    const result = await agent.generate(context.task);
-    return {
-      response: result.text
-    };
-  }
-});
-
 const openai$4 = createOpenAI$1({
   baseURL: "https://jerem-md7wzrrg-eastus2.cognitiveservices.azure.com/openai/v1/",
   apiKey: process.env.MICROSOFT_FOUNDRY_API_KEY
@@ -754,100 +688,6 @@ const managerAgent = new Agent({
     },
     storage: sharedPostgresStorage
   })
-});
-
-const clarityMCPTool = createTool({
-  id: "clarity-mcp",
-  description: "Query Microsoft Clarity data using natural language. Ask for heatmaps, session recordings, or user behavior metrics.",
-  inputSchema: z.object({
-    query: z.string().describe("Natural language query for Clarity data (e.g., 'Show me heatmaps for the checkout page', 'Find sessions with dead clicks')")
-  }),
-  outputSchema: z.object({
-    result: z.any()
-  }),
-  execute: async ({ context, mastra }) => {
-    const transport = new StdioClientTransport({
-      command: "npx",
-      args: ["-y", "@microsoft/clarity-mcp-server"],
-      env: {
-        CLARITY_API_TOKEN: process.env.MICROSOFT_CLARITY_API_KEY || "",
-        PATH: process.env.PATH || ""
-        // Ensure PATH is passed for npx
-      }
-    });
-    const client = new Client(
-      {
-        name: "mastra-client",
-        version: "1.0.0"
-      },
-      {
-        capabilities: {}
-      }
-    );
-    try {
-      await client.connect(transport);
-      const result = await client.callTool({
-        name: "query-analytics-dashboard",
-        arguments: {
-          query: context.query
-        }
-      });
-      return {
-        result
-      };
-    } catch (error) {
-      throw new Error(`Clarity MCP Error: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      await client.close();
-    }
-  }
-});
-
-const ga4MCPTool = createTool({
-  id: "ga4-mcp",
-  description: "Access Google Analytics 4 (GA4) data. Run reports, check metadata, and analyze metrics.",
-  inputSchema: z.object({
-    toolName: z.string().describe("The name of the tool to call (e.g., 'run_report', 'list_properties')"),
-    arguments: z.string().describe("JSON string of arguments for the tool")
-  }),
-  outputSchema: z.object({
-    result: z.any()
-  }),
-  execute: async ({ context, mastra }) => {
-    const transport = new StdioClientTransport({
-      command: "npx",
-      args: ["-y", "github:googleanalytics/google-analytics-mcp"],
-      // Attempting to run from GitHub
-      env: {
-        ...process.env,
-        PATH: process.env.PATH || ""
-      }
-    });
-    const client = new Client(
-      {
-        name: "mastra-ga4-client",
-        version: "1.0.0"
-      },
-      {
-        capabilities: {}
-      }
-    );
-    try {
-      await client.connect(transport);
-      const args = JSON.parse(context.arguments);
-      const result = await client.callTool({
-        name: context.toolName,
-        arguments: args
-      });
-      return {
-        result
-      };
-    } catch (error) {
-      throw new Error(`GA4 MCP Error: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      await client.close();
-    }
-  }
 });
 
 const openai$3 = createOpenAI$1({
@@ -903,53 +743,6 @@ const croAgent = new Agent({
     },
     storage: sharedPostgresStorage
   })
-});
-
-const gtmMCPTool = createTool({
-  id: "gtm-mcp",
-  description: "Manage Google Tag Manager (GTM). Create tags, list containers, and validate versions.",
-  inputSchema: z.object({
-    toolName: z.string().describe("The name of the tool to call (e.g., 'list_containers', 'create_tag')"),
-    arguments: z.string().describe("JSON string of arguments for the tool")
-  }),
-  outputSchema: z.object({
-    result: z.any()
-  }),
-  execute: async ({ context, mastra }) => {
-    const transport = new StdioClientTransport({
-      command: "npx",
-      args: ["-y", "github:neep305/mcp-for-gtm"],
-      // Attempting to run from GitHub (hypothetical, based on user info)
-      env: {
-        ...process.env,
-        PATH: process.env.PATH || ""
-      }
-    });
-    const client = new Client(
-      {
-        name: "mastra-gtm-client",
-        version: "1.0.0"
-      },
-      {
-        capabilities: {}
-      }
-    );
-    try {
-      await client.connect(transport);
-      const args = JSON.parse(context.arguments);
-      const result = await client.callTool({
-        name: context.toolName,
-        arguments: args
-      });
-      return {
-        result
-      };
-    } catch (error) {
-      throw new Error(`GTM MCP Error: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      await client.close();
-    }
-  }
 });
 
 const openai$1 = createOpenAI$1({
